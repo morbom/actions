@@ -1,0 +1,11 @@
+name: control
+description: |
+  Control release process
+outputs:
+  actions:
+    description: |
+      Actions that have been triggered
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+  

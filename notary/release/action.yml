@@ -1,0 +1,23 @@
+name: release
+description: |
+  Mark a Kentik Notary artifact released
+inputs:
+  name:
+    description: Artifact name
+    required: true
+  version:
+    description: Artifact version
+    required: true
+runs:
+  using: docker
+  image: docker://kentik/notary:latest
+  args:
+    - update
+    - --name
+    - ${{ inputs.name }}
+    - --version
+    - ${{ inputs.version }}
+    - --release
+branding:
+  color: blue
+  icon: box
