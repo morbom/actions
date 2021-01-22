@@ -10,18 +10,8 @@ main().catch((error) => {
 
 async function main() {
     let context = github.context;
-    let changes = context.payload?.changes;
     let release = context.payload?.release;
-
-    let before  = parse(changes?.body?.from ?? "")
-    let after   = parse(release?.body       ?? "")
-    let actions = [];
-    
-    for (let [name, done] of Object.entries(before)) {
-        if (!done && after[name]) {
-            actions.push(name);
-        }
-    }
+    let actions = changed(context);
 
     core.setOutput("actions", actions.join(","));
 
@@ -41,13 +31,36 @@ async function main() {
     console.log(`Triggered actions: ${actions}`);
 }
 
+export function changed(context: any): string[] {
+    let before = parse(context.payload?.changes?.body?.from ?? "");
+    let after  = parse(context.payload?.release?.body       ?? "");
+
+    core.debug(`before: ${JSON.stringify(before)}`);
+    core.debug(`after:  ${JSON.stringify(after)}`);
+
+    let actions = { ...before, ...after };
+    let changed = [];
+
+    for (let name of Object.keys(actions)) {
+        if (!before[name] && after[name]) {
+            changed.push(name);
+        }
+    }
+
+    return changed;
+}
+
 function parse(text: string): Record<string, boolean> {
     let items = {};
 
     for (let item of markdown.parse(text)) {
-        if (item.name == 'checklist') {
+        if (item.name == 'checklist' || item.name == 'list') {
             let text = item.values.map(v => v.value);
             let name = normalize(text.join(' '));
+            if (name.startsWith('-x-')) {
+                name = name.substring(3);
+                item.checked = true;
+            }
             items[name] = item.checked
         }
     }
