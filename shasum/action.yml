@@ -1,0 +1,16 @@
+name: shasum
+description: |
+  Generate SHA-512 digests for all artifacts and upload as artifact
+  named sha512.txt. Also post a notification message to the slack
+  channel provided as an input.
+inputs:
+  channel:
+    description: Slack channel
+    required: true
+  message:
+    description: Slack message template
+    required: true
+
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

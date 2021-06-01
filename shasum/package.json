@@ -1,0 +1,22 @@
+{
+    "name": "shasum",
+    "version": "0.0.1",
+    "author": "will@kentik.com",
+    "license": "UNLICENSED",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "ncc build src/index.js",
+        "test": "node src/index.js"
+    },
+    "dependencies": {
+        "@actions/artifact": "^0.5.1",
+        "@actions/core": "^1.3.0",
+        "@actions/github": "^5.0.0",
+        "@slack/web-api": "^6.2.3",
+        "mustache": "^4.2.0"
+    },
+    "devDependencies": {
+        "@vercel/ncc": "^0.28.6",
+        "eslint": "^7.27.0"
+    }
+}
