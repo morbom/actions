@@ -21164,6 +21164,57 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 4821:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { createHash }  = __nccwpck_require__(6417);
+const { createReadStream } = __nccwpck_require__(5747);
+const { readdir } = __nccwpck_require__(5747).promises;
+const { join } = __nccwpck_require__(5622);
+
+const artifact = __nccwpck_require__(2605);
+const core = __nccwpck_require__(2186);
+
+async function artifacts() {
+    const client = artifact.create();
+    const items  = await client.downloadAllArtifacts();
+    core.debug(items);
+    return await hash(items);
+}
+
+async function hash(artifacts) {
+    const options = {
+        encoding:      null,
+        highWaterMark: 8 * 1024,
+    };
+
+    const items = [];
+
+    for (const { artifactName, downloadPath } of artifacts) {
+        const name = artifactName;
+        const path = downloadPath;
+
+        const ents = await readdir(path);
+        const file = join(path, ents[0]);
+        const hash = createHash('sha512');
+
+        const stream = createReadStream(file, options);
+        for await (const chunk of stream) {
+            hash.update(chunk);
+        }
+        const digest = hash.digest('hex');
+
+        items.push({ name, file, digest });
+    }
+
+    return items;
+}
+
+module.exports = { artifacts };
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -21363,16 +21414,15 @@ module.exports = require("zlib");;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const { createHash }  = __nccwpck_require__(6417);
-const { createReadStream } = __nccwpck_require__(5747);
-const { readdir, writeFile } = __nccwpck_require__(5747).promises;
-const { join } = __nccwpck_require__(5622);
+const { writeFile } = __nccwpck_require__(5747).promises;
 
 const artifact = __nccwpck_require__(2605);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { WebClient } = __nccwpck_require__(431);
 const mustache = __nccwpck_require__(8272);
+
+const { artifacts } = __nccwpck_require__(4821);
 
 main().catch((error) => {
     console.log(error);
@@ -21397,13 +21447,6 @@ async function main() {
     await slack.chat.postMessage({ channel, text });
 }
 
-async function artifacts() {
-    const client = artifact.create();
-    const items  = await client.downloadAllArtifacts();
-    core.debug(items);
-    return await hash(items);
-}
-
 async function publish(items) {
     let shasums = "";
     for (const { name, digest } of items) {
@@ -21418,34 +21461,6 @@ async function publish(items) {
 
     const client = artifact.create();
     await client.uploadArtifact(name, files, root);
-}
-
-async function hash(artifacts) {
-    const options = {
-        encoding:      null,
-        highWaterMark: 8 * 1024,
-    };
-
-    const items = [];
-
-    for (const { artifactName, downloadPath } of artifacts) {
-        const name = artifactName;
-        const path = downloadPath;
-
-        const ents = await readdir(path);
-        const file = join(path, ents[0]);
-        const hash = createHash('sha512');
-
-        const stream = createReadStream(file, options);
-        for await (const chunk of stream) {
-            hash.update(chunk);
-        }
-        const digest = hash.digest('hex');
-
-        items.push({ name, file, digest });
-    }
-
-    return items;
 }
 
 })();

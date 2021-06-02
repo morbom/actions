@@ -1,13 +1,12 @@
-const { createHash }  = require('crypto');
-const { createReadStream } = require('fs');
-const { readdir, writeFile } = require('fs').promises;
-const { join } = require('path');
+const { writeFile } = require('fs').promises;
 
 const artifact = require('@actions/artifact');
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { WebClient } = require('@slack/web-api');
 const mustache = require('mustache');
+
+const { artifacts } = require('./fetch');
 
 main().catch((error) => {
     console.log(error);
@@ -32,13 +31,6 @@ async function main() {
     await slack.chat.postMessage({ channel, text });
 }
 
-async function artifacts() {
-    const client = artifact.create();
-    const items  = await client.downloadAllArtifacts();
-    core.debug(items);
-    return await hash(items);
-}
-
 async function publish(items) {
     let shasums = "";
     for (const { name, digest } of items) {
@@ -53,32 +45,4 @@ async function publish(items) {
 
     const client = artifact.create();
     await client.uploadArtifact(name, files, root);
-}
-
-async function hash(artifacts) {
-    const options = {
-        encoding:      null,
-        highWaterMark: 8 * 1024,
-    };
-
-    const items = [];
-
-    for (const { artifactName, downloadPath } of artifacts) {
-        const name = artifactName;
-        const path = downloadPath;
-
-        const ents = await readdir(path);
-        const file = join(path, ents[0]);
-        const hash = createHash('sha512');
-
-        const stream = createReadStream(file, options);
-        for await (const chunk of stream) {
-            hash.update(chunk);
-        }
-        const digest = hash.digest('hex');
-
-        items.push({ name, file, digest });
-    }
-
-    return items;
 }

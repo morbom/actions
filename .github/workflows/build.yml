@@ -1,0 +1,26 @@
+name: build
+
+on:
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        action:
+          - shasum
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+    defaults:
+      run:
+        working-directory: ${{ matrix.action }}
